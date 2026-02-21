@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package acmes;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "markitos-it-svc-acmes/proto";
+
+// Acme representa un acmeo en el sistema
+message Acme {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string category = 4;
+  repeated string tags = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  string content_b64 = 7;
+  string cover_image = 8;
+}
+
+// Request para obtener todos los acmeos
+message GetAllAcmesRequest {}
+
+// Response con lista de acmeos
+message GetAllAcmesResponse {
+  repeated Acme acmes = 1;
+  int32 total = 2;
+}
+
+// Request para obtener un acmeo por ID
+message GetAcmeByIdRequest {
+  string id = 1;
+}
+
+// Response con un acmeo
+message GetAcmeByIdResponse {
+  Acme acme = 1;
+}
+
+// Servicio de acmeos
+service AcmeService {
+  rpc GetAllAcmes(GetAllAcmesRequest) returns (GetAllAcmesResponse);
+  rpc GetAcmeById(GetAcmeByIdRequest) returns (GetAcmeByIdResponse);
+}

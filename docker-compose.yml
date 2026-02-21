@@ -1,0 +1,38 @@
+services:
+  markitos-it-svc-acmes-postgres:
+    image: postgres:17-alpine
+    container_name: markitos-it-svc-acmes-postgres
+    command: ["postgres", "-p", "${POSTGRES_PORT:-55432}"]
+    environment:
+      POSTGRES_USER: markitos-it-svc-acmes
+      POSTGRES_PASSWORD: markitos-it-svc-acmes
+      POSTGRES_DB: markitos-it-svc-acmes
+    ports:
+      - "${POSTGRES_PORT:-55432}:${POSTGRES_PORT:-55432}"
+    volumes:
+      - markitos-it-svc-acmes-postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U markitos-it-svc-acmes -d markitos-it-svc-acmes -p ${POSTGRES_PORT:-55432}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  markitos-it-svc-acmes:
+    build: .
+    container_name: markitos-it-svc-acmes
+    environment:
+      GRPC_PORT: "3000"
+      DB_HOST: markitos-it-svc-acmes-postgres
+      DB_PORT: "${POSTGRES_PORT:-55432}"
+      DB_USER: markitos-it-svc-acmes
+      DB_PASS: markitos-it-svc-acmes
+      DB_NAME: markitos-it-svc-acmes
+    ports:
+      - "3000:3000"
+    depends_on:
+      markitos-it-svc-acmes-postgres:
+        condition: service_healthy
+
+volumes:
+  markitos-it-svc-acmes-postgres_data:
+    driver: local
