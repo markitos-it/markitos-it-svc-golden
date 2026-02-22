@@ -1,6 +1,14 @@
 #!/bin/bash
 
-# Colors
+#:[.'.]:>- ===================================================================================
+#:[.'.]:>- Marco Antonio - markitos devsecops kulture
+#:[.'.]:>- The Way of the Artisan
+#:[.'.]:>- markitos.es.info@gmail.com
+#:[.'.]:>- 🌍 https://github.com/orgs/markitos-it/repositories
+#:[.'.]:>- 🌍 https://github.com/orgs/markitos-public/repositories
+#:[.'.]:>- 📺 https://www.youtube.com/@markitos_devsecops
+#:[.'.]:>- ===================================================================================
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -8,21 +16,13 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Variables
 HOST="localhost"
 PORT="3000"
 DELAY=2
 SERVICE="goldens.GoldenService"
-DB_HOST="localhost"
-DB_PORT="55432"
-DB_USER="markitos-it-svc-goldens"
-DB_PASS="markitos-it-svc-goldens"
-DB_NAME="markitos-it-svc-goldens"
-BACKUP_FILE="/tmp/golden_db_backup.sql"
 
-# Functions
 print_header() {
     echo -e "\n${WHITE}🚀 gRPC Service Test Suite${NC}\n"
 }
@@ -53,6 +53,7 @@ wait_for_next_test() {
     sleep $DELAY
 }
 
+#:[.'.]:>- TEST 0: Verificar conexión al servidor
 check_server() {
     print_test "TEST 0: Verificando conexión al servidor"
     
@@ -67,6 +68,7 @@ check_server() {
     fi
 }
 
+#:[.'.]:>- TEST 1: Obtener todos los registros
 test_get_all_goldens() {
     print_test "TEST 1: GetAllGoldens - Obtener todos los registros"
     
@@ -84,6 +86,7 @@ test_get_all_goldens() {
     fi
 }
 
+#:[.'.]:>- TEST 2: Obtener registro por ID
 test_get_golden_by_id() {
     local GOLDEN_ID=$1
     
@@ -103,6 +106,7 @@ test_get_golden_by_id() {
     fi
 }
 
+#:[.'.]:>- TEST 3: Listar servicios disponibles
 test_list_services() {
     print_test "TEST 3: Listar servicios disponibles"
     
@@ -120,59 +124,22 @@ test_list_services() {
     fi
 }
 
-backup_database() {
-    print_info "Realizando backup de la base de datos..."
-    export PGPASSWORD="${DB_PASS}"
-    
-    if pg_dump -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} > ${BACKUP_FILE} 2>/dev/null; then
-        print_success "Backup realizado en ${BACKUP_FILE}"
-        return 0
-    else
-        print_error "No se pudo hacer backup. ¿Está instalado pg_dump?"
-        return 1
-    fi
-}
-
-restore_database() {
-    print_info "Restaurando base de datos al estado anterior..."
-    export PGPASSWORD="${DB_PASS}"
-    
-    if psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} < ${BACKUP_FILE} 2>/dev/null; then
-        print_success "Base de datos restaurada correctamente"
-        rm -f ${BACKUP_FILE}
-        return 0
-    else
-        print_error "No se pudo restaurar la base de datos. ¿Está psql disponible?"
-        return 1
-    fi
-}
-
-# Main
 main() {
     print_header
     
     print_info "Conectando a ${CYAN}${HOST}:${PORT}${NC}"
     print_separator
     
-    # Check if server is running
     if ! check_server; then
         exit 1
     fi
     
-    # Backup database before tests
-    echo ""
-    if ! backup_database; then
-        print_error "Continuando sin backup..."
-    fi
-    
     wait_for_next_test
     
-    # Test GetAllGoldens
     test_get_all_goldens
     
     wait_for_next_test
     
-    # Extract first ID from response (if possible)
     FIRST_ID=$(grpcurl -plaintext ${HOST}:${PORT} ${SERVICE}/GetAllGoldens 2>/dev/null | grep '"id"' | head -1 | grep -o '"[^"]*"' | sed 's/"//g' | tail -1)
     
     if [ -z "$FIRST_ID" ]; then
@@ -182,26 +149,16 @@ main() {
         print_info "Usando el primer ID encontrado: ${CYAN}${FIRST_ID}${NC}"
     fi
     
-    # Test GetGoldenById
     test_get_golden_by_id "$FIRST_ID"
     
     wait_for_next_test
     
-    # Test List Services
     test_list_services
     
     print_separator
-    
-    # Restore database after tests
-    echo ""
-    if [ -f ${BACKUP_FILE} ]; then
-        restore_database
-    fi
-    
     echo -e "\n${GREEN}✓ Suite de pruebas completada${NC}\n"
 }
 
-# Check if grpcurl is installed
 if ! command -v grpcurl &> /dev/null; then
     echo -e "${RED}Error: grpcurl no está instalado${NC}"
     echo -e "${YELLOW}Instálalo con:${NC}"
@@ -209,5 +166,4 @@ if ! command -v grpcurl &> /dev/null; then
     exit 1
 fi
 
-# Run main function
 main
