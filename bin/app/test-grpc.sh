@@ -9,26 +9,34 @@
 #:[.'.]:>- 📺 https://www.youtube.com/@markitos_devsecops
 #:[.'.]:>- ===================================================================================
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-WHITE='\033[1;37m'
+RED='\033[0;91m'
+GREEN='\033[0;92m'
+YELLOW='\033[0;93m'
+BLUE='\033[0;94m'
+CYAN='\033[0;96m'
+MAGENTA='\033[0;95m'
+WHITE='\033[0;97m'
 NC='\033[0m'
 
 HOST="localhost"
 PORT="3000"
 DELAY=2
 SERVICE="goldens.GoldenService"
+RESULTS=()
 
 print_header() {
     echo -e "\n${WHITE}🚀 gRPC Service Test Suite${NC}\n"
 }
 
 print_test() {
-    echo -e "\n${BLUE}── $1${NC}"
+    local title=$1
+    local info=$2
+
+    echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
+    echo -e "${BLUE}── ${title}${NC}"
+    if [ -n "$info" ]; then
+        echo -e "${WHITE}── INFO: ${info}${NC}"
+    fi
     echo -e "${CYAN}──────────────────────────────────────────────────────────${NC}"
 }
 
@@ -49,8 +57,21 @@ print_separator() {
 }
 
 wait_for_next_test() {
-    echo -e "\n${MAGENTA}⏳ Esperando $DELAY segundos antes del siguiente test...${NC}"
+    echo -e "${MAGENTA}⏳ Esperando $DELAY segundos antes del siguiente test...${NC}"
     sleep $DELAY
+    print_separator
+    echo -e "\n\n"
+}
+
+record_result() {
+    local name=$1
+    local status=$2
+
+    if [ "$status" -eq 0 ]; then
+        RESULTS+=("${GREEN}[OK]${NC}:>- ${name}")
+    else
+        RESULTS+=("${RED}[KO]${NC}:>- ${name}")
+    fi
 }
 
 #:[.'.]:>- TEST 0: Verificar conexión al servidor
@@ -78,32 +99,47 @@ test_get_all_goldens() {
     echo -e "${CYAN}Respuesta:${NC}"
     
     if grpcurl -plaintext ${HOST}:${PORT} ${SERVICE}/GetAllGoldens; then
+        status=0
+    else
+        status=1
+    fi
+
+    print_separator
+    if [ "$status" -eq 0 ]; then
         print_success "GetAllGoldens completado"
-        return 0
     else
         print_error "GetAllGoldens falló"
-        return 1
     fi
+    return $status
 }
 
 #:[.'.]:>- TEST 2: Obtener registro por ID
 test_get_golden_by_id() {
     local GOLDEN_ID=$1
+    local INFO_LINE=$2
     
-    print_test "TEST 2: GetGoldenById - Obtener registro por ID"
+    print_test "TEST 2: GetGoldenById - Obtener registro por ID" "$INFO_LINE"
     
     echo -e "${CYAN}Comando:${NC}"
     echo -e "  ${WHITE}grpcurl -plaintext -d '{\"id\":\"${GOLDEN_ID}\"}' ${HOST}:${PORT} ${SERVICE}/GetGoldenById${NC}\n"
+    echo -e "${CYAN}Parametros:${NC}"
+    echo -e "  ${WHITE}id:${GOLDEN_ID}${NC}"
     
     echo -e "${CYAN}Respuesta:${NC}"
     
     if grpcurl -plaintext -d "{\"id\":\"${GOLDEN_ID}\"}" ${HOST}:${PORT} ${SERVICE}/GetGoldenById; then
+        status=0
+    else
+        status=1
+    fi
+
+    print_separator
+    if [ "$status" -eq 0 ]; then
         print_success "GetGoldenById completado"
-        return 0
     else
         print_error "GetGoldenById falló - Verifica que el ID existe"
-        return 1
     fi
+    return $status
 }
 
 #:[.'.]:>- TEST 3: Listar servicios disponibles
@@ -116,12 +152,18 @@ test_list_services() {
     echo -e "${CYAN}Respuesta:${NC}"
     
     if grpcurl -plaintext ${HOST}:${PORT} list; then
+        status=0
+    else
+        status=1
+    fi
+
+    print_separator
+    if [ "$status" -eq 0 ]; then
         print_success "Listado de servicios completado"
-        return 0
     else
         print_error "No se pudo listar los servicios"
-        return 1
     fi
+    return $status
 }
 
 main() {
@@ -137,25 +179,32 @@ main() {
     wait_for_next_test
     
     test_get_all_goldens
+    record_result "TEST 1: GetAllGoldens" $?
     
     wait_for_next_test
     
     FIRST_ID=$(grpcurl -plaintext ${HOST}:${PORT} ${SERVICE}/GetAllGoldens 2>/dev/null | grep '"id"' | head -1 | grep -o '"[^"]*"' | sed 's/"//g' | tail -1)
     
     if [ -z "$FIRST_ID" ]; then
-        print_info "No se encontraron registros. Usando un ID de ejemplo."
+        INFO_LINE="No se encontraron registros. Usando un ID de ejemplo."
         FIRST_ID="example-id-123"
     else
-        print_info "Usando el primer ID encontrado: ${CYAN}${FIRST_ID}${NC}"
+        INFO_LINE="Usando el primer ID encontrado: ${FIRST_ID}"
     fi
     
-    test_get_golden_by_id "$FIRST_ID"
+    test_get_golden_by_id "$FIRST_ID" "$INFO_LINE"
+    record_result "TEST 2: GetGoldenById" $?
     
     wait_for_next_test
     
     test_list_services
-    
+    record_result "TEST 3: Listar servicios" $?
+
     print_separator
+    echo -e "\n\n${WHITE}Resumen${NC}"
+    for item in "${RESULTS[@]}"; do
+        echo -e "$item"
+    done
     echo -e "\n${GREEN}✓ Suite de pruebas completada${NC}\n"
 }
 

@@ -5,8 +5,8 @@ echo "🧹 Cleaning build artifacts..."
 
 echo "🧹 Cleaning Docker containers, images, and volumes..."
 docker rm markitos-it-svc-goldens markitos-it-svc-goldens-postgres 2>/dev/null || true
-docker image rm postgres:17-alpine markitos-it-svc-golden-template-markitos-it-svc-goldens:latest 2>/dev/null || true
-docker volume rm markitos-it-svc-golden-template_markitos-it-svc-goldens-postgres_data 2>/dev/null || true
+docker image rm postgres:17-alpine markitos-it-svc-golden-markitos-it-svc-goldens:latest 2>/dev/null || true
+docker volume rm markitos-it-svc-golden_markitos-it-svc-goldens-postgres_data 2>/dev/null || true
 echo "✅ Removed Docker containers, images, and volumes"
 
 echo "🧹 Cleaning generated protobuf files..."
