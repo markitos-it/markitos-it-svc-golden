@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	domaingoldens "markitos-it-svc-goldens/internal/domain/domainacmes"
+	"markitos-it-svc-goldens/internal/domain"
 	"time"
 
 	"github.com/lib/pq"
@@ -54,7 +54,7 @@ func (r *GoldenRepository) SeedData(ctx context.Context) error {
 		return nil
 	}
 
-	docs := []domaingoldens.Golden{
+	docs := []domain.Golden{
 		{
 			ID:          "getting-started-keptn",
 			Title:       "Getting Started with Keptn",
@@ -87,7 +87,7 @@ func (r *GoldenRepository) SeedData(ctx context.Context) error {
 	return nil
 }
 
-func (r *GoldenRepository) GetAll(ctx context.Context) ([]domaingoldens.Golden, error) {
+func (r *GoldenRepository) GetAll(ctx context.Context) ([]domain.Golden, error) {
 	query := `
 		SELECT id, title, description, category, tags, updated_at, content_b64, cover_image
 		FROM goldens
@@ -100,9 +100,9 @@ func (r *GoldenRepository) GetAll(ctx context.Context) ([]domaingoldens.Golden, 
 	}
 	defer rows.Close()
 
-	var docs []domaingoldens.Golden
+	var docs []domain.Golden
 	for rows.Next() {
-		var doc domaingoldens.Golden
+		var doc domain.Golden
 		var tags pq.StringArray
 
 		err := rows.Scan(
@@ -130,14 +130,14 @@ func (r *GoldenRepository) GetAll(ctx context.Context) ([]domaingoldens.Golden, 
 	return docs, nil
 }
 
-func (r *GoldenRepository) GetByID(ctx context.Context, id string) (*domaingoldens.Golden, error) {
+func (r *GoldenRepository) GetByID(ctx context.Context, id string) (*domain.Golden, error) {
 	query := `
 		SELECT id, title, description, category, tags, updated_at, content_b64, cover_image
 		FROM goldens
 		WHERE id = $1
 	`
 
-	var doc domaingoldens.Golden
+	var doc domain.Golden
 	var tags pq.StringArray
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -162,7 +162,7 @@ func (r *GoldenRepository) GetByID(ctx context.Context, id string) (*domaingolde
 	return &doc, nil
 }
 
-func (r *GoldenRepository) Create(ctx context.Context, doc *domaingoldens.Golden) error {
+func (r *GoldenRepository) Create(ctx context.Context, doc *domain.Golden) error {
 	query := `
 		INSERT INTO goldens (id, title, description, category, tags, updated_at, content_b64, cover_image)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -188,7 +188,7 @@ func (r *GoldenRepository) Create(ctx context.Context, doc *domaingoldens.Golden
 	return nil
 }
 
-func (r *GoldenRepository) Update(ctx context.Context, doc *domaingoldens.Golden) error {
+func (r *GoldenRepository) Update(ctx context.Context, doc *domain.Golden) error {
 	query := `
 		UPDATE goldens
 		SET title = $2, description = $3, category = $4, tags = $5, updated_at = $6, content_b64 = $7, cover_image = $8

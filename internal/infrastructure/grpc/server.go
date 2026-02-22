@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"markitos-it-svc-goldens/internal/application/services"
-	domaingoldens "markitos-it-svc-goldens/internal/domain/domainacmes"
+	"markitos-it-svc-goldens/internal/domain"
 	pb "markitos-it-svc-goldens/proto"
 
 	"google.golang.org/grpc/codes"
@@ -57,7 +57,7 @@ func (s *GoldenServer) GetGoldenById(ctx context.Context, req *pb.GetGoldenByIdR
 	}, nil
 }
 
-func goldenToProto(doc *domaingoldens.Golden) *pb.Golden {
+func goldenToProto(doc *domain.Golden) *pb.Golden {
 	return &pb.Golden{
 		Id:          doc.ID,
 		Title:       doc.Title,
