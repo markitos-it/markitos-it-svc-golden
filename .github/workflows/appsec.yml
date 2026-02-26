@@ -65,7 +65,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/repo" \
             ghcr.io/gitleaks/gitleaks:latest \
-            detect --source="/repo" --redact --no-banner
+            detect --source="/repo" --redact --no-banner --verbose
 
   sast:
     name: SAST Analysis
