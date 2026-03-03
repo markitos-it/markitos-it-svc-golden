@@ -9,7 +9,7 @@ RUN make proto
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o app cmd/app/main.go
+RUN make proto && CGO_ENABLED=0 GOOS=linux go build -o app cmd/app/main.go
 
 FROM alpine:latest
 
