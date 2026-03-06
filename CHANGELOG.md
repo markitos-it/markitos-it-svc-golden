@@ -1,3 +1,15 @@
+## v0.3.4 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/secured-publish.yaml, CHANGELOG.md ([`local`])
+
+## v0.3.4 (2026-03-06)
+
+### 🔧 Chores
+
+- local working tree changes: .github/workflows/secured-publish.yaml ([`local`])
+
 ## v0.3.3 (2026-03-06)
 
 ### 🔧 Chores
