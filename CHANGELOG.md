@@ -2,6 +2,12 @@
 
 ### 🔧 Chores
 
+- local working tree changes: .github/workflows/secured-publish.yaml, deployment/kubernetes/manifest.yaml ([`local`])
+
+## v0.2.2 (2026-03-06)
+
+### 🔧 Chores
+
 - local working tree changes: deployment/kubernetes/manifest.yaml ([`local`])
 
 ## v0.2.1 (2026-03-06)

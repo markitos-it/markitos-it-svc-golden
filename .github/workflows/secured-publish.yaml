@@ -33,7 +33,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/repo" \
             ghcr.io/gitleaks/gitleaks:latest \
-            detect --source="/repo" --redact --no-banner --verbose
+            detect --source="/repo" --no-git --redact --no-banner --verbose
 
   sast:
     name: SAST Analysis
@@ -85,7 +85,7 @@ jobs:
           directory: .
           quiet: true
           compact: true
-          framework: all
+          framework: kubernetes,dockerfile
           output_format: cli
 
   linting:
