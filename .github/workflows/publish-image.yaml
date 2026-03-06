@@ -1,9 +1,9 @@
-name: publish
+name: publish-image-to-gcp
 
 on:
   push:
     tags:
-      - '*.*.*'
+      - 'v*.*.*'      
   workflow_dispatch:
 
 env:
