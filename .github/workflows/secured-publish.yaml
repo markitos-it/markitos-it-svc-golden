@@ -1,45 +1,3 @@
-name: secured-publish-image-to-gcp
-
-on:
-  push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-
-env:
-  PROJECT_ID: ${{ vars.PROJECT_ID || 'markitos-it-labs-course-basic' }}
-  REGION: ${{ vars.REGION || 'europe-southwest1' }}
-  REPOSITORY: ${{ vars.REPOSITORY || 'private' }}
-  IMAGE_NAME: ${{ github.event.repository.name }}
-
-permissions:
-  contents: read
-
-jobs:
-  snyk-code:
-    name: Snyk Code Scan
-    runs-on: ubuntu-latest
-    concurrency:
-      group: snyk-code-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: Set up Snyk
-        uses: snyk/actions/setup@master
-
-      - name: Run Snyk Code
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk code test --severity-threshold=high
-
   snyk-oss:
     name: Snyk Dependency Scan
     runs-on: ubuntu-latest
@@ -54,10 +12,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true  # habilita cache de módulos
 
       - name: Download Go modules
-        run: |
-          go mod download
+        run: go mod download
+
+      - name: Verify Go modules
+        run: go mod verify
 
       - name: Set up Snyk
         uses: snyk/actions/setup@master
@@ -65,87 +26,4 @@ jobs:
       - name: Run Snyk OSS
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk test --severity-threshold=high
-
-  snyk-iac:
-    name: Snyk IaC Scan
-    runs-on: ubuntu-latest
-    concurrency:
-      group: snyk-iac-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Run Snyk IaC
-        uses: snyk/actions/iac@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --severity-threshold=high deployment/kubernetes
-
-  snyk-container:
-    name: Snyk Container Scan
-    runs-on: ubuntu-latest
-    concurrency:
-      group: snyk-container-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Build local image for scan
-        run: |
-          docker build -t local/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-
-      - name: Run Snyk Container
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: local/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          args: --severity-threshold=high
-
-  publish:
-    name: Publish Image to GCP
-    runs-on: ubuntu-latest
-    needs: [snyk-code, snyk-oss, snyk-iac, snyk-container]
-    if: ${{ success() }}
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Show environment values
-        run: |
-          echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
-          echo "REGION: ${{ env.REGION }}"
-          echo "REPOSITORY: ${{ env.REPOSITORY }}"
-          echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
-          echo "Tag: ${{ github.ref_name }}"
-          echo "Full image path: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker to use gcloud as credential helper
-        run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} .
-
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+        run: snyk test --severity-threshold=high
