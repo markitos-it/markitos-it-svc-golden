@@ -26,13 +26,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Snyk
+        uses: snyk/actions/setup@master
+
       - name: Run Snyk Code
-        uses: snyk/actions/golang@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: code test
-          args: --severity-threshold=high
+        run: |
+          snyk code test --severity-threshold=high
 
   snyk-oss:
     name: Snyk Dependency Scan
@@ -44,13 +50,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download Go modules
+        run: |
+          go mod download
+
+      - name: Set up Snyk
+        uses: snyk/actions/setup@master
+
       - name: Run Snyk OSS
-        uses: snyk/actions/golang@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --severity-threshold=high
+        run: |
+          snyk test --severity-threshold=high
 
   snyk-iac:
     name: Snyk IaC Scan
