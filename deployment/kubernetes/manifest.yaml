@@ -38,7 +38,7 @@ spec:
             drop:
             - ALL
         imagePullPolicy: Always
-        image: europe-southwest1-docker.pkg.dev/markitos-it-labs-course-basic/private/markitos-it-svc-goldens@sha256:4b2793a72697056aaaa11fa6731d7b7f8c974665fa1e67c854709484d8fc8d85
+        image: europe-southwest1-docker.pkg.dev/markitos-it-labs-course-basic/private/markitos-it-svc-goldens:v0.1.0
         ports:
         - containerPort: 3000
           name: grpc
