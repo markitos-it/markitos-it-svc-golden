@@ -1,3 +1,16 @@
+## v0.4.0 (2026-03-07)
+
+### ✨ Features
+
+- (tests) refactor test scripts to use shared setup and improve database handling ([`fabe56e`])
+- (workflow) add secured main branch scans with Snyk and Gitleaks ([`0781d9c`])
+- (tests) enhance service and repository tests with error handling and field mapping ([`8b817df`])
+- add metadata headers to various scripts for documentation and attribution ([`b1e423a`])
+
+### ♻️  Refactor
+
+- (tests) remove unused fuzz tests for GoldenService and GoldenRepository ([`6c94990`])
+
 ## v0.3.1 (2026-03-06)
 
 ### 🔧 Chores
