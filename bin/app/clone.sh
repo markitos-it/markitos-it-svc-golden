@@ -118,15 +118,18 @@ while IFS= read -r -d '' FILE_ITEM; do
         -e "s/\b55432\b/${POSTGRES_PORT}/g" \
         "$FILE_ITEM"
     # Para docker-compose: solo cambia el puerto host del servicio gRPC, el del contenedor siempre es 3000
-    if [[ "$(basename "$FILE_ITEM")" == "docker-compose.yml" || "$(basename "$FILE_ITEM")" == "docker-compose.yaml" ]]; then
+    BASENAME="$(basename "$FILE_ITEM")"
+    if [[ "$BASENAME" == "docker-compose.yml" || "$BASENAME" == "docker-compose.yaml" ]]; then
         sed -i \
             -e "s/\"3000:3000\"/\"${SERVICE_PORT}:3000\"/g" \
             "$FILE_ITEM"
-    else
+    elif [[ "$FILE_ITEM" == */bin/* ]]; then
+        # Scripts de bin/ usan el puerto HOST para conectarse al servicio
         sed -i \
             -e "s/\b3000\b/${SERVICE_PORT}/g" \
             "$FILE_ITEM"
     fi
+    # Dockerfile, manifests k8s y demás: puertos internos del contenedor se dejan en 3000
 done < <(find "$TARGET_DIR" -type f -print0)
 
 # Eliminar clone.sh y target clone del Makefile en el nuevo servicio
