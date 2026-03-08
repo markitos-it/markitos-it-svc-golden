@@ -112,11 +112,21 @@ while IFS= read -r -d '' FILE_ITEM; do
     if ! grep -Iq . "$FILE_ITEM"; then
         continue
     fi
+    # Reemplazo de postgres en todos los archivos
     sed -i \
         -e "s/\${POSTGRES_PORT:-55432}/${POSTGRES_PORT}/g" \
         -e "s/\b55432\b/${POSTGRES_PORT}/g" \
-        -e "s/\b3000\b/${SERVICE_PORT}/g" \
         "$FILE_ITEM"
+    # Para docker-compose: solo cambia el puerto host del servicio gRPC, el del contenedor siempre es 3000
+    if [[ "$(basename "$FILE_ITEM")" == "docker-compose.yml" || "$(basename "$FILE_ITEM")" == "docker-compose.yaml" ]]; then
+        sed -i \
+            -e "s/\"3000:3000\"/\"${SERVICE_PORT}:3000\"/g" \
+            "$FILE_ITEM"
+    else
+        sed -i \
+            -e "s/\b3000\b/${SERVICE_PORT}/g" \
+            "$FILE_ITEM"
+    fi
 done < <(find "$TARGET_DIR" -type f -print0)
 
 # Eliminar clone.sh y target clone del Makefile en el nuevo servicio
@@ -129,6 +139,14 @@ if [ -f "$TARGET_MAKEFILE" ]; then
         -e '/^clone:$/,/^$/d' \
         "$TARGET_MAKEFILE"
 fi
+
+# Eliminar referencias a clone en READMEs y borrar el CHANGELOG
+for DOC_FILE in "$TARGET_DIR/README.md" "$TARGET_DIR/README.es.md"; do
+    if [ -f "$DOC_FILE" ]; then
+        sed -i '/clone/d' "$DOC_FILE"
+    fi
+done
+rm -f "$TARGET_DIR/CHANGELOG.md"
 
 echo "Clonado completado"
 echo "Destino.............: $(realpath "$TARGET_DIR")"
